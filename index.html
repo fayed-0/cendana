@@ -1,0 +1,525 @@
+<?php
+// Koneksi ke database
+include 'koneksi.php';
+
+// Set the number of results per page
+$results_per_page = 10;
+
+// Find out the number of results stored in database
+$result = mysqli_query($koneksi, "SELECT COUNT(*) AS total FROM penghuni");
+$row = mysqli_fetch_assoc($result);
+$total_results = $row['total'];
+
+// Determine the total number of pages available
+$total_pages = ceil($total_results / $results_per_page);
+
+// Determine which page number visitor is currently on
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+if ($page > $total_pages) {
+    $page = $total_pages;
+}
+if ($page < 1) {
+    $page = 1;
+}
+
+// Calculate the starting number for the results on the displaying page
+$starting_limit = ($page - 1) * $results_per_page;
+
+// Retrieve the selected results from the database
+$data = mysqli_query($koneksi, "SELECT * FROM penghuni LIMIT $starting_limit, $results_per_page");
+
+
+
+
+
+// Query untuk menghitung total penghuni
+$query_total_warga = "SELECT COUNT(idpenghuni) AS total_warga FROM penghuni";
+$result_total_warga = mysqli_query($koneksi, $query_total_warga);
+if ($result_total_warga) {
+    $data_total_warga = mysqli_fetch_assoc($result_total_warga);
+    $total_warga = $data_total_warga['total_warga'] ?? 0;
+} else {
+    // Jika query gagal, tampilkan pesan error
+    $total_warga = 0; // Atau bisa Anda set ke nilai lain sesuai kebutuhan
+    error_log("Query Error: " . mysqli_error($koneksi)); // Log error untuk debugging
+}
+
+// Query untuk menghitung total perempuan
+$query_perempuan = "SELECT COUNT(idpenghuni) AS total_perempuan FROM penghuni WHERE jeniskelamin = 'Perempuan'";
+$result_perempuan = mysqli_query($koneksi, $query_perempuan);
+if ($result_perempuan) {
+    $data_perempuan = mysqli_fetch_assoc($result_perempuan);
+    $total_perempuan = $data_perempuan['total_perempuan'] ?? 0;
+} else {
+    $total_perempuan = 0; 
+    error_log("Query Error: " . mysqli_error($koneksi));
+}
+
+// Query untuk menghitung total laki-laki
+$query_laki_laki = "SELECT COUNT(idpenghuni) AS total_laki_laki FROM penghuni WHERE jeniskelamin = 'Laki-laki'";
+$result_laki_laki = mysqli_query($koneksi, $query_laki_laki);
+if ($result_laki_laki) {
+    $data_laki_laki = mysqli_fetch_assoc($result_laki_laki);
+    $total_laki_laki = $data_laki_laki['total_laki_laki'] ?? 0;
+} else {
+    $total_laki_laki = 0;
+    error_log("Query Error: " . mysqli_error($koneksi));
+}
+// Query to count total products
+$query_total_product = "SELECT COUNT(id) AS total_product FROM products";
+$result_total_product = mysqli_query($koneksi, $query_total_product);
+if ($result_total_product) {
+    $data_total_product = mysqli_fetch_assoc($result_total_product);
+    $total_product = $data_total_product['total_product'] ?? 0;
+} else {
+    $total_product = 0; // Default value if query fails
+    error_log("Query Error: " . mysqli_error($koneksi)); // Log error for debugging
+}
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Cendana</title>
+
+    <!-- Custom fonts for this template-->
+    <link href="vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
+
+    <!-- Custom styles for this template-->
+    <link href="css/sb-admin-2.min.css" rel="stylesheet">
+    <style>
+        /* Custom styles for sidebar */
+        .sidebar {
+            background-color: white;
+        }
+        .nav-link {
+            color: blue;
+        }
+        .nav-link.active {
+            background-color: ;
+            color: white;
+        }
+        .nav-item:hover .nav-link {
+            color: blue;
+        }
+        .card {
+            margin-bottom: 20px;
+        }
+        .dashboard-summary {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .summary-box {
+            flex: 1;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            color: #fff;
+            transition: transform 0.3s;
+            text-decoration: none;
+        }
+        .summary-box:hover {
+            transform: translateY(-5px);
+        }
+        .summary-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .summary-count {
+            font-size: 28px;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        .icon-box {
+            font-size: 30px;
+            margin-bottom: 10px;
+        }
+        .bg-summary { background-color: #4e73df; } 
+        .summary-table {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border: 1px solid white;
+            border-radius: 8px;
+            margin-top: 20px;
+            background-color: #4e73df;
+            color: white;
+        }
+        .summary-row {
+            flex: 1;
+            text-align: center;
+        }
+        .summary-row i {
+            margin-right: 5px;
+        }
+        .separator {
+            width: 1px; 
+            height: 60px; 
+            background-color: white; 
+            margin: 0 20px;
+            display: inline-block;
+        }
+    </style>
+</head>
+
+<body id="page-top">
+
+    <!-- Page Wrapper -->
+    <div id="wrapper">
+
+        <!-- Sidebar -->
+        <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
+            <a class="sidebar-brand d-flex align-items-center justify-content-center" href="index.php">
+                <div class="sidebar-brand-icon">
+                    <i class="fas fa-archway" style="font-size: 24px;"></i>
+                </div>
+                <div class="sidebar-brand-text mx-3"> Cendana</div>
+            </a>
+            <hr class="sidebar-divider my-0">
+            <li class="nav-item active">
+                <a class="nav-link" href="index.php">
+                    <i class="fas fa-home"></i>
+                    <span>Home</span></a>
+            </li>
+            <hr class="sidebar-divider">
+            <li class="nav-item">
+                <a class="nav-link" href="datawarga.php">
+                    <i class="fas fa-folder-open"></i>
+                    <span>Data Warga</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="forumdiskusi.php">
+                    <i class="fas fa-comments"></i>
+                    <span>Forum Diskusi</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="pelaporan.php">
+                    <i class="fas fa-file"></i>
+                    <span>Pelaporan</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="belanja.php">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>Belanja</span>
+                </a>
+            </li>
+
+            <!-- Nav Item - Button Jualan -->
+            <li class="nav-item">
+                <a class="nav-link" href="Penjual.php">
+                    <i class="fas fa-store"></i>
+                    <span>Jualan</span>
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link" href="#" onclick="confirmLogout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </a>
+            </li>
+            <hr class="sidebar-divider">
+            <hr class="sidebar-divider d-none d-md-block">
+            <div class="text-center d-none d-md-inline">
+                <button class="rounded-circle border-0" id="sidebarToggle"></button>
+            </div>
+        </ul>
+        <!-- End of Sidebar -->
+
+        <!-- Content Wrapper -->
+        <div id="content-wrapper" class="d-flex flex-column">
+
+            <!-- Main Content -->
+            <div id="content">
+
+                <!-- Topbar -->
+            <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
+
+                <!-- Sidebar Toggle (Topbar) -->
+                <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
+                    <i class="fa fa-bars"></i>
+                </button>
+
+                <!-- Topbar Search -->
+                <form
+                    class="d-none d-sm-inline-block form-inline mr-auto ml-md-3 my-2 my-md-0 mw-100 navbar-search">
+                    <div class="input-group">
+                        <input type="text" class="form-control bg-light border-0 small" placeholder="Search for..."
+                            aria-label="Search" aria-describedby="basic-addon2">
+                        <div class="input-group-append">
+                            <button class="btn btn-primary" type="button">
+                                <i class="fas fa-search fa-sm"></i>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Topbar Navbar -->
+                <ul class="navbar-nav ml-auto">
+
+                    <!-- Nav Item - Search Dropdown (Visible Only XS) -->
+                    <li class="nav-item dropdown no-arrow d-sm-none">
+                        <a class="nav-link dropdown-toggle" href="#" id="searchDropdown" role="button"
+                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <!-- Dropdown - Messages -->
+                        <div class="dropdown-menu dropdown-menu-right p-3 shadow animated--grow-in"
+                            aria-labelledby="searchDropdown">
+                            <form class="form-inline mr-auto w-100 navbar-search">
+                                <div class="input-group">
+                                    <input type="text" class="form-control bg-light border-0 small"
+                                        placeholder="Search for..." aria-label="Search"
+                                        aria-describedby="basic-addon2">
+                                    <div class="input-group-append">
+                                        <button class="btn btn-primary" type="button">
+                                            <i class="fas fa-search fa-sm"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </li>
+
+                    <div class="topbar-divider d-none d-sm-block"></div>
+
+                    <!-- Nav Item - User Information -->
+                    <li class="nav-item dropdown no-arrow">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <span class="mr-2 d-none d-lg-inline text-gray-600 small">User 1</span>
+                            <img class="img-profile rounded-circle" src="img/undraw_profile.svg">
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="userDropdown">
+                            <a class="dropdown-item" href="admin_datawarga.php">
+                                <i class="fas fa-user-cog fa-sm fa-fw mr-2 text-gray-400"></i>Admin Account
+                            </a>
+                            <a class="dropdown-item" href="index.php">
+                                <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>User Account
+                            </a>
+                        </div>
+                    </li>
+
+                </ul>
+
+                </nav>
+                <!-- End of Topbar -->
+
+                <!-- Box Total Warga -->
+                <div class="container-fluid">
+                    <div class="summary-table">
+                        <div class="summary-row">
+                            <i class="fas fa-users"></i>
+                            <strong>Total Warga:</strong>
+                            <div class="summary-count"><?php echo $total_warga; ?></div>
+                        </div>
+                        <div class="separator"></div> 
+                        <div class="summary-row">
+                            <i class="fas fa-female"></i>
+                            <strong>Total Perempuan:</strong>
+                            <div class="summary-count"><?php echo $total_perempuan; ?></div>
+                        </div>
+                        <div class="separator"></div> 
+                        <div class="summary-row">
+                            <i class="fas fa-male"></i>
+                            <strong>Total Laki-laki:</strong>
+                            <div class="summary-count"><?php echo $total_laki_laki; ?></div>
+                        </div>
+                        <div class="separator"></div> 
+                        <div class="summary-row">
+                        <i class="fas fa-shopping-cart"></i>
+                            <strong>Total product:</strong>
+                            <div class="summary-count"><?php echo $total_product; ?></div>
+                        </div>
+                    </div>
+
+
+                        <!-- Table Data Warga -->
+                    <div class="card shadow mb-4" style="margin-top: 20px;"> <!-- Add margin here -->
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-fixed" id="dataTable" width="100%" cellspacing="0">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 4%;">No</th>
+                                            <th style="width: 20%;">Nama </th>
+                                            <th style="width: 9%;">Jenis Kelamin</th>
+                                            <th style="width: 10%;">Tanggal Lahir</th>
+                                            <th style="width: 10%;">Alamat</th>
+                                            <th style="width: 15%;">Email</th>
+                                            <th style="width: 10%;">Telp</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php
+                                        // Set the number of results per page
+                                        $results_per_page = 10;
+
+                                        // Find out the number of results stored in database
+                                        $result = mysqli_query($koneksi, "SELECT COUNT(*) AS total FROM penghuni");
+                                        $row = mysqli_fetch_assoc($result);
+                                        $total_results = $row['total'];
+
+                                        // Determine the total number of pages available
+                                        $total_pages = ceil($total_results / $results_per_page);
+
+                                        // Determine which page number visitor is currently on
+                                        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+                                        if ($page > $total_pages) {
+                                            $page = $total_pages;
+                                        }
+                                        if ($page < 1) {
+                                            $page = 1;
+                                        }
+
+                                        // Calculate the starting number for the results on the displaying page
+                                        $starting_limit = ($page - 1) * $results_per_page;
+
+                                        // Retrieve the selected results from the database
+                                        $data = mysqli_query($koneksi, "SELECT * FROM penghuni LIMIT $starting_limit, $results_per_page");
+                                        while ($d = mysqli_fetch_array($data)) {
+                                        ?>
+                                        <tr>
+                                            <td><?php echo $d['idpenghuni']; ?></td>
+                                            <td><?php echo $d['namalengkap']; ?></td>
+                                            <td><?php echo $d['jeniskelamin']; ?></td>
+                                            <td><?php echo $d['tanggallahir']; ?></td>
+                                            <td><?php echo $d['alamat']; ?></td>
+                                            <td><?php echo $d['email']; ?></td>
+                                            <td><?php echo $d['notelp']; ?></td>
+                                        </tr>
+                                        <?php
+                                        }
+                                        ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                <!-- End of Box Total Warga -->
+                
+                <!-- Pagination -->
+                <div class="d-flex justify-content-end">
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination">
+                            <!-- Tombol ke Halaman Pertama -->
+                            <?php if ($page > 1): ?>
+                                <li class="page-item">
+                                    <a class="page-link" href="index.php?page=1" aria-label="First">
+                                        <span aria-hidden="true">&laquo;</span>
+                                    </a>
+                                </li>
+                            <?php endif; ?>
+
+                            <?php
+                                // Define the range of page numbers to display (e.g., 5 pages at a time)
+                                $range = 5;
+                                $start = max(1, $page - floor($range / 2));
+                                $end = min($total_pages, $start + $range - 1);
+
+                                // Adjust the range if we're near the start or end of the pagination
+                                if ($end - $start + 1 < $range) {
+                                    $start = max(1, $end - $range + 1);
+                                }
+
+                                for ($i = $start; $i <= $end; $i++): ?>
+                                    <li class="page-item <?php echo $i == $page ? 'active' : ''; ?>">
+                                        <a class="page-link" href="index.php?page=<?php echo $i; ?>"><?php echo $i; ?></a>
+                                    </li>
+                            <?php endfor; ?>
+
+                            <!-- Tombol ke Halaman Terakhir -->
+                            <?php if ($page < $total_pages): ?>
+                                <li class="page-item">
+                                    <a class="page-link" href="index.php?page=<?php echo $total_pages; ?>" aria-label="Last">
+                                        <span aria-hidden="true">&raquo;</span>
+                                    </a>
+                                </li>
+                            <?php endif; ?>
+                        </ul>
+                    </nav>
+                </div>
+
+            </div>
+        </div>
+               
+               
+
+            </div>
+            <!-- End of Main Content -->
+
+        </div>
+        <!-- End of Content Wrapper -->
+
+    </div>
+    <!-- End of Page Wrapper -->
+
+    <!-- Scroll to Top Button-->
+    <a class="scroll-to-top rounded" href="#page-top">
+        <i class="fas fa-angle-up"></i>
+    </a>
+
+    <!-- Logout Modal-->
+    <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="logoutModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="logoutModalLabel">Ready to Leave?</h5>
+                    <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">Select "Logout" below if you are ready to end your current session.</div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary" type="button" onclick="logout()">Logout</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+
+    <script>
+        function confirmLogout() {
+            if (confirm("Apakah anda yakin untuk keluar?")) {
+                window.location.href = "http://localhost/landingpage/login.php"; // Redirect to login page if confirmed
+            }
+        }
+
+        // Menandai tombol yang aktif
+        const links = document.querySelectorAll('.nav-link');
+        links.forEach(link => {
+            link.addEventListener('click', () => {
+                links.forEach(item => item.classList.remove('active')); // Hapus active dari semua
+                link.classList.add('active'); // Tambahkan active ke yang diklik
+            });
+        });
+    </script>
+    
+    <!-- Bootstrap core JavaScript-->
+    <script src="vendor/jquery/jquery.min.js"></script>
+    <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Core plugin JavaScript-->
+    <script src="vendor/jquery-easing/jquery.easing.min.js"></script>
+
+    <!-- Custom scripts for all pages-->
+    <script src="js/sb-admin-2.min.js"></script>
+
+</body>
+
+</html>
