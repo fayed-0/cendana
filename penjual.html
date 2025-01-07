@@ -1,0 +1,380 @@
+<?php
+// Koneksi ke database
+$koneksi = mysqli_connect("localhost", "root", "", "Resident");
+
+// Cek koneksi
+if (mysqli_connect_errno()) {
+    die("Koneksi database gagal: " . mysqli_connect_error());
+}
+
+// Ambil laporan dari database
+$query = "SELECT t.*, p.name FROM transaksi t JOIN products p ON t.product_id = p.id";
+$result = mysqli_query($koneksi, $query);
+
+
+$result = mysqli_query($koneksi, $query);
+
+// Cek jika query gagal
+if (!$result) {
+    die('Query gagal: ' . mysqli_error($koneksi));
+}
+
+// Ambil data jika query berhasil
+if (mysqli_num_rows($result) > 0) {
+    $laporan = mysqli_fetch_all($result, MYSQLI_ASSOC);
+} else {
+    $laporan = [];
+}
+
+// Tutup koneksi
+mysqli_close($koneksi);
+?>
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Cendana - Pelaporan</title>
+
+    <!-- Custom fonts for this template-->
+    <link href="vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
+
+    <!-- Custom styles for this template-->
+    <link href="css/sb-admin-2.min.css" rel="stylesheet">
+
+    <style>
+        .report-content {
+            font-size: 1.25rem;
+        }
+    </style>
+</head>
+
+<body id="page-top">
+    <!-- Page Wrapper -->
+    <div id="wrapper">
+        <!-- Sidebar -->
+    <!-- Sidebar -->
+    <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
+
+<!-- Sidebar - Brand -->
+<a class="sidebar-brand d-flex align-items-center justify-content-center" href="index.php">
+    <div class="sidebar-brand-icon">
+        <i class="fas fa-archway" style="font-size: 24px;"></i>
+    </div>
+    <div class="sidebar-brand-text mx-3">Cendana</div>
+</a>
+
+<!-- Divider -->
+<hr class="sidebar-divider my-0">
+
+<!-- Nav Item - Dashboard -->
+<li class="nav-item">
+    <a class="nav-link" href="index.php">
+        <i class="fas fa-home"></i>
+        <span>Home</span></a>
+</li>
+
+<!-- Divider -->
+<hr class="sidebar-divider">
+
+<!-- Nav Item - Button data warga -->
+<li class="nav-item">
+    <a class="nav-link" href="datawarga.php">
+        <i class="fas fa-folder-open"></i>
+        <span>Data Warga</span>
+    </a>
+</li>
+
+<!-- Nav Item - Button forum diskusi-->
+<li class="nav-item">
+    <a class="nav-link" href="forumdiskusi.php" id="forumLink">
+        <i class="fas fa-comments"></i>
+        <span>Forum Diskusi</span>
+    </a>
+</li>
+
+<!-- Nav Item - Button pelaporan -->
+<li class="nav-item">
+    <a class="nav-link" href="pelaporan.php">
+        <i class="fas fa-file"></i>
+        <span>Pelaporan</span>
+    </a>
+</li>
+
+<!-- Nav Item - Button belanja -->
+<li class="nav-item">
+    <a class="nav-link" href="belanja.php">
+        <i class="fas fa-shopping-cart"></i>
+        <span>Belanja</span>
+    </a>
+</li>
+
+<!-- Nav Item - Button Jualan -->
+<li class="nav-item active">
+    <a class="nav-link" href="Penjual.php">
+        <i class="fas fa-store"></i>
+        <span>Jualan</span>
+    </a>
+</li>
+
+<!-- Nav Item - Button Logout -->
+<li class="nav-item">
+    <a class="nav-link" href="#" onclick="confirmLogout()">
+        <i class="fas fa-sign-out-alt"></i>
+        <span>Logout</span>
+    </a>
+</li>
+
+<!-- Divider -->
+<hr class="sidebar-divider">
+
+<!-- Divider -->
+<hr class="sidebar-divider d-none d-md-block">
+
+<!-- Sidebar Toggler (Sidebar) -->
+<div class="text-center d-none d-md-inline">
+    <button class="rounded-circle border-0" id="sidebarToggle"></button>
+</div>
+
+</ul>
+<!-- End of Sidebar -->
+
+        <!-- Content Wrapper -->
+        <div id="content-wrapper" class="d-flex flex-column">
+            <div id="content">
+            <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
+                    <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
+                        <i class="fa fa-bars"></i>
+                    </button>
+                    <form class="d-none d-sm-inline-block form-inline mr-auto ml-md-3 my-2 my-md-0 mw-100 navbar-search">
+                        <div class="input-group">
+                            <input type="text" class="form-control bg-light border-0 small" placeholder="Search for..." aria-label="Search" aria-describedby="basic-addon2">
+                            <div class="input-group-append">
+                                <button class="btn btn-primary" type="button">
+                                    <i class="fas fa-search fa-sm"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                    <ul class="navbar-nav ml-auto">
+                        <li class="nav-item dropdown no-arrow">
+                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <span class="mr-2 d-none d-lg-inline text-gray-600 small">Admin 1</span>
+                                <img class="img-profile rounded-circle" src="img/undraw_profile.svg">
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="userDropdown">
+                                <a class="dropdown-item" href="admin_datawarga.php">
+                                    <i class="fas fa-user-cog fa-sm fa-fw mr-2 text-gray-400"></i>Admin Account
+                                </a>
+                                <a class="dropdown-item" href="index.php">
+                                    <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>User Account
+                                </a>
+                            </div>
+                        </li>
+                    </ul>
+                </nav>
+
+                <div class="container-fluid">
+                    <!-- Tombol untuk menambah kuliner -->
+                    <button type="button" class="btn mb-3" style="background-color: #4e73df; color: white;" data-toggle="modal" data-target="#tambahKulinerModal">Tambah Kuliner</button>
+
+                <div class="products">
+                    <?php while ($row = mysqli_fetch_assoc($result)) { ?>
+                    <div class="product">
+                        <img src="<?php echo $row['image_url']; ?>" alt="<?php echo $row['name']; ?>">
+                        <div class="product-info">
+                            <div class="product-title"><?php echo $row['name']; ?></div>
+                            <div class="product-address"><?php echo $row['address']; ?></div>
+                            <div class="product-description"><?php echo $row['description']; ?></div>
+                            <div class="product-price">Harga mulai dari: Rp <?php echo number_format($row['price'], 0, ',', '.'); ?></div>
+                            <a href="https://wa.me/qr/<?php echo $row['whatsapp_link']; ?>" class="order-button">Hubungi Penjual</a>
+                        </div>
+                    </div>
+                    <?php } ?>
+                </div>
+
+                 <!-- Modal Tambah Kuliner -->
+    <div class="modal fade" id="tambahKulinerModal" tabindex="-1" role="dialog" aria-labelledby="tambahKulinerModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                <h5 class="modal-title" id="tambahKulinerModalLabel">Tambah Kuliner</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form action="tambah_kuliner.php" method="POST">
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="name">Nama Kuliner</label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="address">Alamat</label>
+                            <input type="text" class="form-control" id="address" name="address" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="description">Deskripsi</label>
+                            <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="price">Harga</label>
+                            <input type="number" class="form-control" id="price" name="price" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="whatsapp_link">Link WhatsApp</label>
+                            <input type="text" class="form-control" id="whatsapp_link" name="whatsapp_link" required>
+                        </div>
+                        <div class="form-group">
+                        <label for="image_url">Pilih Gambar</label>
+                        <input type="file" class="form-control" id="image_url" name="image_url" accept="image/*" required>
+                    </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+                        <button type="submit" class="btn btn-primary">Simpan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+                    <!-- Tabel Pesanan Warga -->
+                    <div class="card">
+                        <div class="card-header">
+                            <i class="fas fa-store"></i> Pesanan Warga
+                        </div>
+                        <div class="card-body" id="reportList">
+                        <?php if (!empty($laporan)): ?>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>No</th>
+                <th>Nama Produk</th>
+                <th>Jumlah</th>
+                <th>Pengiriman</th>
+                <th>Metode Pembayaran</th>
+                <th>Transfer Bank</th>
+                <th>Total Harga</th>
+                <th>Tanggal Transaksi</th>
+                <th>Status</th>
+                <th>Tindakan</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($laporan as $lapor): ?>
+                <tr>
+                    <td><?php echo htmlspecialchars($lapor['id']); ?></td>
+                    <td><?php echo htmlspecialchars($lapor['name']); ?></td>
+                    <td><?php echo htmlspecialchars($lapor['quantity']); ?></td>
+                    <td><?php echo htmlspecialchars($lapor['delivery_method']); ?></td>
+                    <td><?php echo htmlspecialchars($lapor['payment_method']); ?></td>
+                    <td><?php echo htmlspecialchars($lapor['transfer_bank']); ?></td>
+                    <td><?php echo htmlspecialchars($lapor['total_price']); ?></td>
+                    <td><?php echo htmlspecialchars($lapor['transaction_date']); ?></td>
+                    <td>
+                        <span class="badge 
+                            <?php
+                            if ($lapor['status'] == 'Pending') echo 'badge-warning';
+                            elseif ($lapor['status'] == 'Ditangani') echo 'badge-info';
+                            elseif ($lapor['status'] == 'Selesai') echo 'badge-success';
+                            ?>">
+                            <?php echo htmlspecialchars($lapor['status']); ?>
+                        </span>
+                    </td>
+                    <td>
+                        <form method="POST" action="update_status.php">
+                            <input type="hidden" name="id" value="<?php echo $lapor['id']; ?>">
+                            <select name="status" class="form-control">
+                                <option value="Pending" <?php echo $lapor['status'] == 'Pending' ? 'selected' : ''; ?>>Pending</option>
+                                <option value="Ditangani" <?php echo $lapor['status'] == 'Ditangani' ? 'selected' : ''; ?>>Ditangani</option>
+                                <option value="Selesai" <?php echo $lapor['status'] == 'Selesai' ? 'selected' : ''; ?>>Selesai</option>
+                            </select>
+                            <button type="submit" class="btn btn-primary btn-sm mt-2">Update</button>
+                        </form>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
+<?php else: ?>
+    <p>Belum ada laporan yang masuk.</p>
+<?php endif; ?>
+
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function confirmLogout() {
+            if (confirm("Apakah Anda yakin ingin logout?")) {
+                window.location.href = "logout.php";
+            }
+        }
+    </script>
+    <script src="vendor/jquery/jquery.min.js"></script>
+<script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="vendor/jquery-easing/jquery.easing.min.js"></script>
+<script src="js/sb-admin-2.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+    $(document).ready(function(){
+        // Saat form di-submit
+        $("form").submit(function(event){
+            event.preventDefault(); // Mencegah reload halaman
+
+            // Ambil data form
+            var formData = $(this).serialize();
+
+            // Kirim data menggunakan AJAX
+            $.ajax({
+                type: "POST",
+                url: "update_status.php",
+                data: formData,
+                success: function(response) {
+                    alert("Status berhasil diperbarui!");
+                    location.reload(); // Refresh halaman untuk menampilkan status terbaru
+                },
+                error: function() {
+                    alert("Terjadi kesalahan saat memperbarui status.");
+                }
+            });
+        });
+    });
+</script>
+
+
+
+
+<script>
+        function confirmLogout() {
+            if (confirm("Apakah anda yakin untuk keluar?")) {
+                window.location.href = "http://localhost/landingpage/login.php"; // Redirect to login page if confirmed
+            }
+        }
+
+        // Menandai tombol yang aktif
+        const links = document.querySelectorAll('.nav-link');
+        links.forEach(link => {
+            link.addEventListener('click', () => {
+                links.forEach(item => item.classList.remove('active')); // Hapus active dari semua
+                link.classList.add('active'); // Tambahkan active ke yang diklik
+            });
+        });
+    </script>
+</body>
+
+</html>

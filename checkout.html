@@ -1,0 +1,651 @@
+<?php
+include('koneksi.php');
+
+if (isset($_GET['product_id'])) {
+    $product_id = intval($_GET['product_id']);
+
+    $query = "SELECT * FROM products WHERE id = $product_id";
+    $result = mysqli_query($koneksi, $query);
+
+    if ($result && mysqli_num_rows($result) > 0) {
+        $product = mysqli_fetch_assoc($result);
+    } else {
+        die("Produk tidak ditemukan.");
+    }
+} else {
+    die("Produk tidak ditemukan.");
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Cendana - Belanja</title>
+
+    <!-- Custom fonts for this template-->
+    <link href="vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
+
+    <!-- Custom styles for this template-->
+    <link href="css/sb-admin-2.min.css" rel="stylesheet">
+    <style>
+        .products { display: block; margin-top: 20px; }
+        .product { display: flex; border: 1px solid #ddd; border-radius: 5px; overflow: hidden; color: black; transition: transform 0.2s; margin-bottom: 20px; position: relative; }
+        .product:hover { transform: scale(1.02); box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); }
+        .product img { width: 200px; height: 200px; object-fit: cover; }
+        .product-info { padding: 15px; display: flex; flex-direction: column; justify-content: center; max-width: 1000px; }
+        .product-title { font-size: 18px; font-weight: bold; }
+        .product-description { font-size: 14px; margin: 10px 0; overflow: hidden; text-overflow: ellipsis; white-space: normal; }
+        .product-address { font-size: 14px; margin: 5px 0; color: gray; }
+        .product-price { font-size: 16px; color: green; }
+        .order-button { position: absolute; bottom: 10px; right: 10px; background-color: #007bff; color: white; padding: 8px 16px; border-radius: 5px; text-decoration: none; font-size: 14px; }
+        .order-button:hover { background-color: green; font-weight: bold; color: white; }
+    </style>
+<style>
+       
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f8f9fa;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: #007bff;
+            color: #fff;
+            padding: 15px 20px;
+            text-align: center;
+        }
+
+        .product {
+            display: flex;
+            align-items: flex-start;
+            padding: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .product img {
+            width: 200px;
+            height: auto;
+            border-radius: 8px;
+            margin-right: 20px;
+        }
+
+        .product-details h2 {
+            font-size: 22px;
+            margin-bottom: 10px;
+            color: #007bff;
+        }
+
+        .product-details p {
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+
+        .form-section {
+            padding: 0px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .summary {
+            background: #f1f1f1;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .summary p {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background: #28a745;
+            color: #fff;
+            font-size: 18px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #218838;
+        }
+    </style>
+<style>
+        #accordionSidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 250px;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+
+        .topbar {
+            position: fixed;
+            top: 0;
+            left: 250px;
+            right: 0;
+            z-index: 1000;
+        }
+
+        #content-wrapper {
+            margin-left: 250px;
+            padding-top: 70px;
+            overflow-y: auto;
+            height: 100vh;
+        }
+
+        .container-fluid {
+            padding: 20px;
+        }
+        input[type="checkbox"], label {
+        display: inline-block;
+        }
+
+        label {
+        margin-left: 5px;
+        }
+      
+    </style>
+
+</head>
+
+<body id="page-top">
+
+    <!-- Page Wrapper -->
+    <div id="wrapper">
+        <!-- Sidebar -->
+        <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
+
+            <!-- Sidebar - Brand -->
+            <a class="sidebar-brand d-flex align-items-center justify-content-center" href="index.php">
+                <div class="sidebar-brand-icon">
+                    <i class="fas fa-archway" style="font-size: 24px;"></i>
+                </div>
+                <div class="sidebar-brand-text mx-3">Cendana</div>
+            </a>
+
+            <!-- Divider -->
+            <hr class="sidebar-divider my-0">
+
+            <!-- Nav Item - Dashboard -->
+            <li class="nav-item">
+                <a class="nav-link" href="index.php">
+                    <i class="fas fa-home"></i>
+                    <span>Home</span></a>
+            </li>
+
+            <!-- Divider -->
+            <hr class="sidebar-divider">
+
+            <!-- Nav Item - Button data warga -->
+            <li class="nav-item">
+                <a class="nav-link" href="datawarga.php">
+                    <i class="fas fa-folder-open"></i>
+                    <span>Data Warga</span>
+                </a>
+            </li>
+
+            <!-- Nav Item - Button forum diskusi-->
+            <li class="nav-item">
+                <a class="nav-link" href="forumdiskusi.php" id="forumLink">
+                    <i class="fas fa-comments"></i>
+                    <span>Forum Diskusi</span>
+                </a>
+            </li>
+
+            <!-- Nav Item - Button pelaporan -->
+            <li class="nav-item">
+                <a class="nav-link" href="pelaporan.php">
+                    <i class="fas fa-file"></i>
+                    <span>Pelaporan</span>
+                </a>
+            </li>
+
+            <!-- Nav Item - Button belanja -->
+            <li class="nav-item active">
+                <a class="nav-link" href="belanja.php">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>Belanja</span>
+                </a>
+            </li>
+
+            <!-- Nav Item - Button Jualan -->
+            <li class="nav-item">
+                <a class="nav-link" href="Penjual.php">
+                    <i class="fas fa-store"></i>
+                    <span>Jualan</span>
+                </a>
+            </li>
+
+            <!-- Nav Item - Button Logout -->
+            <li class="nav-item">
+                <a class="nav-link" href="#" onclick="confirmLogout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </a>
+            </li>
+
+            <!-- Divider -->
+            <hr class="sidebar-divider">
+
+            <!-- Divider -->
+            <hr class="sidebar-divider d-none d-md-block">
+
+            <!-- Sidebar Toggler (Sidebar) -->
+            <div class="text-center d-none d-md-inline">
+                <button class="rounded-circle border-0" id="sidebarToggle"></button>
+            </div>
+
+        </ul>
+        <!-- End of Sidebar -->
+
+        <!-- Content Wrapper -->
+        <div id="content-wrapper" class="d-flex flex-column">
+            <div id="content">
+                 <!-- Topbar -->
+                 <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
+
+                <!-- Sidebar Toggle (Topbar) -->
+                <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
+                    <i class="fa fa-bars"></i>
+                </button>
+
+                <!-- Topbar Search -->
+                <form
+                    class="d-none d-sm-inline-block form-inline mr-auto ml-md-3 my-2 my-md-0 mw-100 navbar-search">
+                    <div class="input-group">
+                        <input type="text" class="form-control bg-light border-0 small" placeholder="Search for..."
+                            aria-label="Search" aria-describedby="basic-addon2">
+                        <div class="input-group-append">
+                            <button class="btn btn-primary" type="button">
+                                <i class="fas fa-search fa-sm"></i>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Topbar Navbar -->
+                <ul class="navbar-nav ml-auto">
+
+                    <!-- Nav Item - Search Dropdown (Visible Only XS) -->
+                    <li class="nav-item dropdown no-arrow d-sm-none">
+                        <a class="nav-link dropdown-toggle" href="#" id="searchDropdown" role="button"
+                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="fas fa-search fa-fw"></i>
+                        </a>
+                        <!-- Dropdown - Messages -->
+                        <div class="dropdown-menu dropdown-menu-right p-3 shadow animated--grow-in"
+                            aria-labelledby="searchDropdown">
+                            <form class="form-inline mr-auto w-100 navbar-search">
+                                <div class="input-group">
+                                    <input type="text" class="form-control bg-light border-0 small"
+                                        placeholder="Search for..." aria-label="Search"
+                                        aria-describedby="basic-addon2">
+                                    <div class="input-group-append">
+                                        <button class="btn btn-primary" type="button">
+                                            <i class="fas fa-search fa-sm"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </li>
+
+                    <div class="topbar-divider d-none d-sm-block"></div>
+
+                    <!-- Nav Item - User Information -->
+                    <li class="nav-item dropdown no-arrow">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <span class="mr-2 d-none d-lg-inline text-gray-600 small">User 1</span>
+                            <img class="img-profile rounded-circle" src="img/undraw_profile.svg">
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="userDropdown">
+                            <a class="dropdown-item" href="admin_datawarga.php">
+                                <i class="fas fa-user-cog fa-sm fa-fw mr-2 text-gray-400"></i>Admin Account
+                            </a>
+                            <a class="dropdown-item" href="index.php">
+                                <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>User Account
+                            </a>
+                        </div>
+                    </li>
+
+                </ul>
+
+                </nav>
+                <!-- End of Topbar -->
+
+                <!-- Begin Page Content -->
+                <div class="container-fluid">
+                <div class="product">
+                <img src="<?php echo $product['image_url']; ?>" alt="<?php echo $product['name']; ?>">
+                <div class="product-details">
+                    <h2><?php echo $product['name']; ?></h2>
+                    <p><?php echo $product['address']; ?></p>
+                    <p><?php echo $product['description']; ?></p>
+                    <p>Harga: Rp <?php echo number_format($product['price'], 0, ',', '.'); ?></p>
+                </div>
+            </div>
+            <form action="proses_checkout.php" method="POST" class="form-section">
+    <input type="hidden" name="product_id" value="<?php echo $product['id']; ?>">
+
+    <div class="form-group">
+        <label for="quantity">Jumlah Barang:</label>
+        <input type="number" name="quantity" id="quantity" value="1" min="1" onchange="updateTotal()">
+    </div>
+
+    <div class="summary">
+        <p>Total Barang: <span id="total_quantity">1</span></p>
+        <p>Total Harga: Rp <span id="total_price"><?php echo number_format($product['price'], 0, ',', '.'); ?></span></p>
+    </div>
+
+    <div class="form-group">
+        <label for="delivery_method">Metode Pengiriman:</label>
+        <select name="delivery_method" id="delivery_method">
+            <option value="delivery">Dikirim oleh Penjual</option>
+            <option value="pickup">Ambil Sendiri</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="payment_method" style="display: block; font-weight: bold; margin-bottom: 10px;">Metode Pembayaran:</label>
+        
+        <select name="payment_method" id="payment_method" onchange="togglePaymentOptions()" style="width: 100%; padding: 5px;">
+            <option value="COD">COD (Cash on Delivery)</option>
+            <option value="Transfer">Transfer Bank</option>
+        </select>
+
+        <div id="transfer_options" style="display: none; margin-top: 10px;">
+            <label for="transfer_bank">Pilih Bank:</label>
+            <select name="transfer_bank" id="transfer_bank" style="width: 100%; padding: 5px;">
+                <option value="BCA">BCA (6043700184)</option>
+                <option value="OVO">OVO (6043700184)</option>
+                <option value="GoPay">GoPay (6043700184)</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Popup Modal untuk detail transaksi -->
+    <div id="detailModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2>Detail Transaksi</h2>
+            <div class="detail-item">
+                <strong>Nama Kuliner:</strong>
+                <span id="product_name"><?php echo $product['name']; ?></span>
+            </div>
+            <div class="detail-item">
+                <strong>Alamat:</strong>
+                <span id="address"><?php echo $product['address']; ?></span>
+            </div>
+            <div class="detail-item">
+                <strong>Jumlah Barang:</strong>
+                <span id="detail_quantity">1</span>
+            </div>
+            <div class="detail-item">
+                <strong>Total Barang:</strong>
+                <span id="detail_total_quantity">1</span>
+            </div>
+            <div class="detail-item">
+                <strong>Total Harga:</strong>
+                <span id="detail_total_price">Rp 25.000</span>
+            </div>
+            <div class="detail-item">
+                <strong>Metode Pengiriman:</strong>
+                <span id="delivery_method_detail">Dikirim oleh Penjual</span>
+            </div>
+            <div class="detail-item">
+                <strong>Metode Pembayaran:</strong>
+                <span id="payment_method_detail">COD</span>
+            </div>
+
+            <div class="modal-buttons">
+            <button type="submit" name="confirm" id="confirm_button">Ya, Konfirmasi</button>
+            <button type="button" class="cancel-btn" onclick="closeModal()">Batal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tombol Konfirmasi Pembelian -->
+    <div class="form-group">
+        <button type="button" onclick="openModal()">Konfirmasi Pembelian</button>
+    </div>
+</form>
+
+<script>
+// Fungsi untuk menampilkan dropdown bank jika Transfer Bank dipilih
+function togglePaymentOptions() {
+    const paymentMethod = document.getElementById('payment_method').value;
+    const transferOptions = document.getElementById('transfer_options');
+
+    if (paymentMethod === 'Transfer') {
+        transferOptions.style.display = 'block'; // Tampilkan dropdown bank
+    } else {
+        transferOptions.style.display = 'none'; // Sembunyikan dropdown bank
+    }
+}
+
+// Fungsi untuk membuka modal detail transaksi
+function openModal() {
+    const quantity = document.getElementById('quantity').value;
+    const deliveryMethod = document.getElementById('delivery_method').value;
+    const paymentMethod = document.getElementById('payment_method').value;
+
+    // Update detail transaksi di modal
+    document.getElementById('detail_quantity').textContent = quantity;
+    document.getElementById('detail_total_quantity').textContent = quantity;
+    document.getElementById('detail_total_price').textContent = 'Rp ' + (quantity * <?php echo $product['price']; ?>).toLocaleString();
+    document.getElementById('delivery_method_detail').textContent = deliveryMethod === 'delivery' ? 'Dikirim oleh Penjual' : 'Ambil Sendiri';
+    document.getElementById('payment_method_detail').textContent = paymentMethod === 'Transfer' ? 'Transfer Bank' : 'COD';
+
+    const modal = document.getElementById('detailModal');
+    modal.style.display = "block";
+}
+
+// Fungsi untuk menutup modal detail transaksi
+function closeModal() {
+    const modal = document.getElementById('detailModal');
+    modal.style.display = "none";
+}
+
+// Fungsi untuk mengirim form setelah konfirmasi
+function submitForm() {
+    document.querySelector('form').submit();
+}
+
+// Menutup modal ketika user mengklik di luar modal
+window.onclick = function(event) {
+    const modal = document.getElementById('detailModal');
+    if (event.target == modal) {
+        modal.style.display = "none";
+    }
+}
+
+function updateTotal() {
+    const quantity = parseInt(document.getElementById('quantity').value) || 0;
+    const unitPrice = <?php echo $product['price']; ?>; // Harga satuan produk
+
+    // Hitung total harga
+    const totalPrice = quantity * unitPrice;
+
+    // Update elemen di halaman
+    document.getElementById('total_quantity').textContent = quantity;
+    document.getElementById('total_price').textContent = totalPrice.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' });
+
+    // Update detail transaksi di modal
+    document.getElementById('detail_quantity').textContent = quantity;
+    document.getElementById('detail_total_quantity').textContent = quantity;
+    document.getElementById('detail_total_price').textContent = totalPrice.toLocaleString('id-ID', { style: 'currency', currency: 'IDR' });
+}
+
+</script>
+
+<style>
+/* Styling untuk modal */
+.modal {
+    display: none; 
+    position: fixed; 
+    z-index: 1; 
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); 
+    padding-top: 60px;
+}
+
+.modal-content {
+    background-color: #fff;
+    margin: 5% auto;
+    padding: 30px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    text-align: left;
+}
+
+h2 {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.detail-item {
+    margin-bottom: 15px;
+    font-size: 16px;
+    color: #555;
+}
+
+.detail-item strong {
+    color: #000;
+}
+
+.modal-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+}
+
+button {
+    padding: 12px 20px;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    border: none;
+}
+
+.confirm-btn {
+    background-color: #28a745;
+    color: white;
+}
+
+.cancel-btn {
+    background-color: #dc3545;
+    color: white;
+}
+
+.confirm-btn:hover {
+    background-color: #218838;
+}
+
+.cancel-btn:hover {
+    background-color: #c82333;
+}
+
+.close {
+    color: #aaa;
+    font-size: 28px;
+    font-weight: bold;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+</style>
+
+            </div>
+            </div>
+        </div>
+    </div>
+
+    
+
+    <!-- Scroll to Top Button-->
+    <a class="scroll-to-top rounded" href="#page-top"><i class="fas fa-angle-up"></i></a>
+
+ 
+    <script>
+        function confirmLogout() {
+            if (confirm("Apakah anda yakin untuk keluar?")) {
+                window.location.href = "http://localhost/landingpage/login.php"; // Redirect to login page if confirmed
+            }
+        }
+
+        // Menandai tombol yang aktif
+        const links = document.querySelectorAll('.nav-link');
+        links.forEach(link => {
+            link.addEventListener('click', () => {
+                links.forEach(item => item.classList.remove('active')); // Hapus active dari semua
+                link.classList.add('active'); // Tambahkan active ke yang diklik
+            });
+        });
+    </script>
+
+    <script src="vendor/jquery/jquery.min.js"></script>
+    <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="vendor/jquery-easing/jquery.easing.min.js"></script>
+    <script src="js/sb-admin-2.min.js"></script>
+    
+   
+
+
+</body>
+</html>

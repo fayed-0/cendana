@@ -1,0 +1,425 @@
+<?php
+// Koneksi database
+$koneksi = mysqli_connect("localhost", "root", "", "Resident");
+
+// Cek koneksi
+if (mysqli_connect_errno()) {
+    echo "Koneksi database gagal: " . mysqli_connect_error();
+}
+
+// Proses form jika ada yang dikirim
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    if (isset($_POST['reply'])) {
+        // Jika admin membalas
+        $topic_id = $_POST['topicId'];
+        $reply_content = mysqli_real_escape_string($koneksi, $_POST['replyContent']);
+        
+        // Ambil nama pengirim yang ingin dibalas
+        $previous_query = "SELECT sender_name FROM diskusi WHERE id = '$topic_id'";
+        $previous_result = mysqli_query($koneksi, $previous_query);
+        $previous_data = mysqli_fetch_assoc($previous_result);
+        $sender_name = $previous_data['sender_name'];
+
+        // Query untuk menyimpan balasan ke database
+        $query = "INSERT INTO diskusi (sender_name, topic_title, topic_content, parent_id) VALUES ('Admin', 'Balasan untuk $sender_name', '$reply_content', '$topic_id')";
+        
+        if (mysqli_query($koneksi, $query)) {
+            echo "<script>alert('Balasan berhasil terkirim!');</script>";
+        } else {
+            echo "<script>alert('Terjadi kesalahan: " . mysqli_error($koneksi) . "');</script>";
+        }
+    } elseif (isset($_POST['delete'])) {
+        // Hapus diskusi
+        $diskusi_id = $_POST['diskusiId'];
+        $delete_query = "DELETE FROM diskusi WHERE id = '$diskusi_id' OR parent_id = '$diskusi_id'"; // Hapus diskusi beserta balasannya
+        if (mysqli_query($koneksi, $delete_query)) {
+            echo "<script>alert('Diskusi berhasil dihapus!');</script>";
+        } else {
+            echo "<script>alert('Terjadi kesalahan saat menghapus: " . mysqli_error($koneksi) . "');</script>";
+        }
+    } else {
+        // Jika warga membuat diskusi baru
+        $sender_name = mysqli_real_escape_string($koneksi, $_POST['senderName']);
+        $topic_title = mysqli_real_escape_string($koneksi, $_POST['topicTitle']);
+        $topic_content = mysqli_real_escape_string($koneksi, $_POST['topicContent']);
+        
+        // Query untuk menyimpan diskusi ke database
+        $query = "INSERT INTO diskusi (sender_name, topic_title, topic_content) VALUES ('$sender_name', '$topic_title', '$topic_content')";
+        
+        if (mysqli_query($koneksi, $query)) {
+            echo "<script>alert('Diskusi berhasil terkirim!');</script>";
+        } else {
+            echo "<script>alert('Terjadi kesalahan: " . mysqli_error($koneksi) . "');</script>";
+        }
+    }
+}
+
+// Fetch diskusi dari database, termasuk balasannya
+$diskusi_query = "SELECT * FROM diskusi WHERE parent_id IS NULL ORDER BY created_at ASC"; // Urutkan berdasarkan waktu pembuatan
+$diskusi_result = mysqli_query($koneksi, $diskusi_query);
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Cendana - Forum Diskusi</title>
+    <link href="vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
+    <link href="css/sb-admin-2.min.css" rel="stylesheet">
+    <style>
+        #accordionSidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 250px;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+
+        .topbar {
+            position: fixed;
+            top: 0;
+            left: 250px;
+            right: 0;
+            z-index: 1000;
+        }
+
+        #content-wrapper {
+            margin-left: 250px;
+            padding-top: 70px;
+            overflow-y: auto;
+            height: 100vh;
+        }
+
+        .container-fluid {
+            padding: 20px;
+        }
+
+        .diskusi-item {
+            padding: 15px;
+            border-bottom: 1px solid #e3e6f0;
+            margin-bottom: 10px;
+        }
+
+        .sender-name {
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        .topic-content {
+            font-size: 1.2em;
+        }
+
+        .admin-reply {
+            background-color: #d4edda;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+
+        .admin-label {
+            color: green;
+            font-weight: bold;
+        }
+
+        .action-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body id="page-top">
+
+<div id="wrapper">
+     <!-- Sidebar -->
+     <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
+            <a class="sidebar-brand d-flex align-items-center justify-content-center" href="index.php">
+                <div class="sidebar-brand-icon">
+                    <i class="fas fa-archway" style="font-size: 24px;"></i>
+                </div>
+                <div class="sidebar-brand-text mx-3">Cendana</div>
+            </a>
+            <hr class="sidebar-divider my-0">
+            <li class="nav-item">
+                <a class="nav-link" href="index.php">
+                    <i class="fas fa-home"></i>
+                    <span>Home</span></a>
+            </li>
+            <hr class="sidebar-divider">
+            <li class="nav-item">
+                <a class="nav-link" href="datawarga.php">
+                    <i class="fas fa-folder-open"></i>
+                    <span>Data Warga</span>
+                </a>
+            </li>
+            <li class="nav-item active">
+                <a class="nav-link" href="forumdiskusi.php" id="forumLink">
+                    <i class="fas fa-comments"></i>
+                    <span>Forum Diskusi</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="pelaporan.php">
+                    <i class="fas fa-file"></i>
+                    <span>Pelaporan</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="belanja.php">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>Belanja</span>
+                </a>
+            </li>
+
+            <!-- Nav Item - Button Jualan -->
+            <li class="nav-item">
+                <a class="nav-link" href="Penjual.php">
+                    <i class="fas fa-store"></i>
+                    <span>Jualan</span>
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link" href="#" onclick="confirmLogout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </a>
+            </li>
+            <hr class="sidebar-divider">
+            <hr class="sidebar-divider">
+
+            <div class="text-center d-none d-md-inline">
+                <button class="rounded-circle border-0" id="sidebarToggle"></button>
+            </div>
+        </ul>
+        <!-- End of Sidebar -->
+
+    <!-- Content Wrapper -->
+    <div id="content-wrapper" class="d-flex flex-column">
+        <div id="content">
+            <!-- Topbar -->
+                <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
+
+                    <!-- Sidebar Toggle (Topbar) -->
+                    <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
+                        <i class="fa fa-bars"></i>
+                    </button>
+
+                    <!-- Topbar Search -->
+                    <form
+                        class="d-none d-sm-inline-block form-inline mr-auto ml-md-3 my-2 my-md-0 mw-100 navbar-search">
+                        <div class="input-group">
+                            <input type="text" class="form-control bg-light border-0 small" placeholder="Search for..."
+                                aria-label="Search" aria-describedby="basic-addon2">
+                            <div class="input-group-append">
+                                <button class="btn btn-primary" type="button">
+                                    <i class="fas fa-search fa-sm"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Topbar Navbar -->
+                    <ul class="navbar-nav ml-auto">
+
+                        <!-- Nav Item - Search Dropdown (Visible Only XS) -->
+                        <li class="nav-item dropdown no-arrow d-sm-none">
+                            <a class="nav-link dropdown-toggle" href="#" id="searchDropdown" role="button"
+                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <i class="fas fa-search fa-fw"></i>
+                            </a>
+                            <!-- Dropdown - Messages -->
+                            <div class="dropdown-menu dropdown-menu-right p-3 shadow animated--grow-in"
+                                aria-labelledby="searchDropdown">
+                                <form class="form-inline mr-auto w-100 navbar-search">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control bg-light border-0 small"
+                                            placeholder="Search for..." aria-label="Search"
+                                            aria-describedby="basic-addon2">
+                                        <div class="input-group-append">
+                                            <button class="btn btn-primary" type="button">
+                                                <i class="fas fa-search fa-sm"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </li>
+
+                        <div class="topbar-divider d-none d-sm-block"></div>
+
+                        <!-- Nav Item - User Information -->
+                        <li class="nav-item dropdown no-arrow">
+                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <span class="mr-2 d-none d-lg-inline text-gray-600 small">User 1</span>
+                                <img class="img-profile rounded-circle" src="img/undraw_profile.svg">
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="userDropdown">
+                                <a class="dropdown-item" href="admin_datawarga.php">
+                                    <i class="fas fa-user-cog fa-sm fa-fw mr-2 text-gray-400"></i>Admin Account
+                                </a>
+                                <a class="dropdown-item" href="index.php">
+                                    <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>User Account
+                                </a>
+                            </div>
+                        </li>
+
+                    </ul>
+
+                </nav>
+                <!-- End of Topbar -->
+
+            <div class="container-fluid">
+                <h1 class="h3 mb-4 text-gray-800">Forum Diskusi</h1>
+
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="fas fa-comments"></i> Daftar Diskusi
+                    </div>
+                    <div class="card-body" id="diskusiList">
+                        <?php if (mysqli_num_rows($diskusi_result) > 0): ?>
+                            <?php while($diskusi = mysqli_fetch_assoc($diskusi_result)): ?>
+                                <div class="diskusi-item">
+                                    <!-- Tampilan untuk Diskusi Awal -->
+                                    <span class="sender-name"><?php echo htmlspecialchars($diskusi['sender_name']); ?></span><br>
+                                    <span class="topic-content"><?php echo nl2br(htmlspecialchars($diskusi['topic_content'])); ?></span>
+                                    <div class="action-buttons">
+                                        <small><em>terkirim: <?php echo htmlspecialchars($diskusi['created_at']); ?></em></small>
+                                       
+                                    </div>
+
+                                    <!-- Cek apakah ada balasan untuk diskusi ini -->
+                                    <?php
+                                    $reply_query = "SELECT * FROM diskusi WHERE parent_id = " . $diskusi['id'] . " ORDER BY created_at ASC";
+                                    $reply_result = mysqli_query($koneksi, $reply_query);
+                                    while ($reply = mysqli_fetch_assoc($reply_result)):
+                                    ?>
+                                        <div class="admin-reply mt-2">
+                                            <span class="admin-label">Admin</span> | <span class="sender-name"><?php echo htmlspecialchars($diskusi['sender_name']); ?></span><br>
+                                            <span class="topic-content"><?php echo nl2br(htmlspecialchars($reply['topic_content'])); ?></span>
+                                            <div class="action-buttons">
+                                                <small><em>terkirim: <?php echo htmlspecialchars($reply['created_at']); ?></em></small>
+                                            </div>
+                                        </div>
+                                    <?php endwhile; ?>
+                                </div>
+                            <?php endwhile; ?>
+                        <?php else: ?>
+                            <p>Tidak ada diskusi yang tersedia.</p>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                            <!-- Tombol Buat Diskusi Baru -->
+                            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#newDiscussionModal" style="position: fixed; bottom: 20px; right: 20px; z-index: 1000;">
+                                <i class="fas fa-comments"></i> Buat Diskusi Baru
+                            </button>
+
+
+
+                    <!-- Modal Buat Diskusi Baru -->
+                    <div class="modal fade" id="newDiscussionModal" tabindex="-1" aria-labelledby="newDiscussionModalLabel" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="newDiscussionModalLabel">Buat Diskusi Baru</h5>
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
+                                <form id="formNewTopic" method="post" action="">
+                                    <div class="modal-body">
+                                        <div class="form-group">
+                                            <label for="senderName">Nama Pengirim</label>
+                                            <input type="text" class="form-control" name="senderName" id="senderName" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="topicTitle">Judul Topik</label>
+                                            <input type="text" class="form-control" name="topicTitle" id="topicTitle" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="topicContent">Isi Diskusi</label>
+                                            <textarea class="form-control" name="topicContent" id="topicContent" rows="3" required></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+                                        <button type="submit" class="btn btn-primary">Kirim Diskusi</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Balasan -->
+<div class="modal fade" id="replyModal" tabindex="-1" role="dialog" aria-labelledby="replyModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="replyModalLabel">Balas Diskusi</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form action="" method="POST">
+                <div class="modal-body">
+                    <input type="hidden" name="topicId" id="topicId">
+                    <div class="form-group">
+                        <label for="replyContent">Konten Balasan</label>
+                        <textarea class="form-control" id="replyContent" name="replyContent" rows="4" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+                    <button type="submit" name="reply" class="btn btn-primary">Kirim Balasan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+                <script>
+                        function confirmLogout() {
+                            if (confirm("Apakah anda yakin untuk keluar?")) {
+                                window.location.href = "http://localhost/landingpage/login.php"; // Redirect to login page if confirmed
+                            }
+                        }
+
+                        // Menandai tombol yang aktif
+                        const links = document.querySelectorAll('.nav-link');
+                        links.forEach(link => {
+                            link.addEventListener('click', () => {
+                                links.forEach(item => item.classList.remove('active')); // Hapus active dari semua
+                                link.classList.add('active'); // Tambahkan active ke yang diklik
+                            });
+                        });
+                    </script>
+
+<script src="vendor/jquery/jquery.min.js"></script>
+<script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="vendor/jquery-easing/jquery.easing.min.js"></script>
+<script src="js/sb-admin-2.min.js"></script>
+<script>
+    $('#replyModal').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget);
+        var topicId = button.data('id');
+        var modal = $(this);
+        modal.find('#topicId').val(topicId);
+    });
+</script>
+</body>
+</html>
+
+<?php
+// Tutup koneksi
+mysqli_close($koneksi);
+?>
